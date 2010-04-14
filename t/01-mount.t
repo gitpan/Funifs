@@ -11,6 +11,7 @@ use Test::More tests => 6;
 ok( -d $td, 'tempdir(delta)' );
 ok( -d $mn, 'tempdir(mount node)' );
 ok( system(@cmd) == 0, 'mount.funifs' );
+sleep 1;
 ok( scalar(stat("$mn/group")), 'mounted' );
 ok( system("fusermount","-u",$mn) == 0, 'umount' );
 ok( system("rmdir",$td,$mn) == 0, 'rmdir /tmp/funifs.*' );

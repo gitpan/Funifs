@@ -1,9 +1,10 @@
 Build.PL
 fstab
 funifs
+Funifs.pm
 fuse
 MANIFEST			This list of files
+META.yml
 README
 t/00-load.t
 t/01-mount.t
-META.yml
