@@ -10,7 +10,7 @@
 #
 package Funifs;
 
-$VERSION = '1.0_1';
+$VERSION = '1.1';
 
 1;
 __END__
