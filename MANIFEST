@@ -2,7 +2,7 @@ Build.PL
 fstab
 funifs
 Funifs.pm
-fuse
+rcfunifs
 MANIFEST			This list of files
 META.yml
 README

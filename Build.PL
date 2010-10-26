@@ -18,10 +18,10 @@ my $build = new Module::Build (
     'Funifs.pm' => 'docs/funifs',
   },
   sys_files => {
-    'funifs' => 'sys/usr/sbin/funifs',
-    'fuse'   => 'sys/etc/init.d/fuse',
-    'README' => 'sys/usr/share/doc/packages/funifs/README',
-    'fstab'  => 'sys/usr/share/doc/packages/funifs/fstab',
+    'funifs'    => 'sys/usr/sbin/funifs',
+    'rcfunifs'  => 'sys/etc/init.d/funifs',
+    'README'    => 'sys/usr/share/doc/packages/funifs/README',
+    'fstab'     => 'sys/usr/share/doc/packages/funifs/fstab',
   },
   install_path  => { 'sys' => '/', },
   #create_packlist => 0,        #-- enable this to disable .packlist creation

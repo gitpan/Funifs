@@ -4,7 +4,7 @@ author:
   - 'Vladimir Kolpakov <vova@cpan.org>'
 configure_requires:
   Module::Build: 0.36
-generated_by: 'Module::Build version 0.3607'
+generated_by: 'Module::Build version 0.3603'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -16,4 +16,4 @@ requires:
   Unix::Syslog: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.1
+version: 1.2

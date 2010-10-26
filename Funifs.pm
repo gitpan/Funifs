@@ -10,7 +10,7 @@
 #
 package Funifs;
 
-$VERSION = '1.1';
+$VERSION = '1.2';
 
 1;
 __END__
@@ -33,7 +33,7 @@ make something easy and stable whilst open for extensions.
 =head1 HOSTED ON
 
  https://funifs.googlecode.com/hg/
- http://search.cpan.org/
+ http://search.cpan.org/~vova/Funifs/
 
 =head1 INSTALLATION
 
@@ -44,7 +44,7 @@ After download and unpack tarball, run this in directory with Build.PL:
 =head1 PACKAGE FILES
 
  funifs  - /usr/sbin/funifs - funifs userspace FUSE driver
- fuse    - /etc/init.d/fuse - service script to mount/unmount at system boot
+ rcfunifs - /etc/init.d/funifs - service script to mount/unmount at system boot
  fstab (in /usr/share/doc/packages/funifs/) - examples of /etc/fstab lines.
 
 =head1 DRY RUN

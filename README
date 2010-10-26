@@ -11,7 +11,7 @@ OBJECTIVE
 
 HOSTED ON
      https://funifs.googlecode.com/hg/
-     http://search.cpan.org/
+     http://search.cpan.org/~vova/Funifs/
 
 INSTALLATION
     After download and unpack tarball, run this in directory with Build.PL:
@@ -20,7 +20,7 @@ INSTALLATION
 
 PACKAGE FILES
      funifs  - /usr/sbin/funifs - funifs userspace FUSE driver
-     fuse    - /etc/init.d/fuse - service script to mount/unmount at system boot
+     rcfunifs - /etc/init.d/funifs - service script to mount/unmount at system boot
      fstab (in /usr/share/doc/packages/funifs/) - examples of /etc/fstab lines.
 
 DRY RUN
