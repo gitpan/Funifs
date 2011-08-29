@@ -5,10 +5,10 @@
 # Driver is calling from mount.fuse wrapper
 # See --help and "man Fuse" for details.
 #
-# Copyright (C) Vladimir V. Kolpakov 2006-2010
+# Copyright (C) Vladimir V. Kolpakov 2006-2011
 # All rights reserved.
 #
-#--w 02/2006############################################################
+#--w 02/2006,03/2010,08/2011############################################
 package Fuse::Funifs;
 use strict;
 
@@ -40,14 +40,12 @@ my $MaxFiles = 100;             #-- max length of @Fh
 my @Branch = ();                #-- ordered branches list
 #-----------------------------------------------------------------------
 my $LogMsg = join(' ',$0,@ARGV);
-#&Say("---1---$FSname: $LogMsg\n");
 my $opt = {
   'help'    => undef,
   'verbose' => 0,
   'opts'    => '',
   'debug'   => undef,
 };
-sub Say { $opt->{'verbose'} and print STDERR @_; }
 #--- Consume --option words before any mount.fuse arguments
 #- Ignore any /bin/mount arguments
 GetOptions(
@@ -56,6 +54,7 @@ GetOptions(
   'd'       => \$opt->{'debug'},    #-- to enable FUSE debug, enable debug in Fuse::main call below
   'v|verbose+'  => \$opt->{'verbose'},
 );
+sub Say { $opt->{'verbose'} and print STDERR @_; }
 &Say("---2---$FSname: $LogMsg\n");
 my ($fspath     #-- fstab FS's "specification" with "$FSname#" stripped out in mount.fuse
    ,$Union      #-- mount point
@@ -64,7 +63,7 @@ my ($fspath     #-- fstab FS's "specification" with "$FSname#" stripped out in m
 $Opts   ||= $opt->{'opts'} if $opt->{'opts'};
 $fspath ||= '/union';           #-- fake default, for --help only
 $Union  ||= '/mnt/union';       #-- fake default, for --help only
-my $fsSpec = "$FSname#$fspath"; #-- re-assemble fstab's spec value back
+my $fsSpec = ".$fspath";        #-- re-assemble fstab's spec value back
 #---
 @Branch = split(/:/, $1) if ($Opts =~ s/\bdirs=([^,]+)//);
 my $dirs = join(':',@Branch);
@@ -82,7 +81,7 @@ sub Usage {
   FUSE funifs (read-only union) filesystem driver
 Normally invoking by mount.fuse helper at "mount -a -t fuse" boot call
 
-Usage:  (mount.fuse convention):
+Usage:  (mount.fuse order):
     $FSname {FS_spec} {Union_mount_point} {[-o] Fstab_options]} [OPTIONS]
 
 Options:
@@ -94,7 +93,7 @@ Example:
     $FSname $fsSpec $Union -o ro,noexec,nosuid,nodev,dirs=$dirs -v
 
 /etc/fstab line example:
-    $fsSpec $Union fuse user,ro,_netdev,dirs=$dirs 0 91
+    $fsSpec $Union fuse.funifs user,ro,_netdev,dirs=$dirs 0 91
 
 /etc/fstab options:
     user,ro,_netdev                 #-- [recommended] mount options
@@ -140,7 +139,7 @@ unless (scalar(@Branch)) {
 $LogMsg = "$fsSpec $Union $Opts";
 &Say("---3---$FSname: $LogMsg\n");
 &printLog('mount.fuse: '.$LogMsg);
-#Feb 10 00:10:22 knob funifs[7366]: mount.fuse: funifs#/dev /web/me.nu/dev ro,noexec,nosuid,nodev,dirs=/web/sites/me.nu/Delta/dev:/web/sites/me.nu/www
+#Aug 29 01:02:32 kent funifs[23161]: mount.fuse: ./example.com/u/w /web/example.com/u/w ro,dev,suid,noexec,nosuid,nodev,dirs=/web/sites/example.com/u/w:/web/sites/example.com/www
 ############ Internal functions ########################################
 #----------- upath() ---------------------------------------
 #--- Find top exiting file in union, return real path
@@ -200,7 +199,7 @@ sub u_open {
 #- Called to indicate that there are no more references to the file.
 #- Called once for every file with the same pathname and flags as were passed to open.
 sub u_release {
-  &Say("---37---u_release(@_)\n");
+  &Say("---39---u_release(@_)\n");
   #my ($file,$mode) = @_;
   return 0;
 }
@@ -209,7 +208,7 @@ sub u_release {
 #--NOTE: 0 means EOF, "0" will
 #- give a byte (ascii "0") to the reading program.
 sub u_read {
-  &Say("---38.1---u_read(@_)\n");
+  &Say("---40.1---u_read(@_)\n");
   my ($file,$size,$off) = @_;
   my ($fh,$rc,$buf,$path);
   $path = upath($file) or return -ENOENT();
@@ -219,20 +218,20 @@ sub u_read {
     $rc = sysseek($fh,$off,0) or return -EINVAL();
   }
   $rc = sysread($fh,$buf,$size);    #-- sysread(FILEHANDLE,SCALAR,LENGTH,OFFSET)
-  &Say("---38.2---u_read: length=<".length($buf).">\n");
+  &Say("---40.2---u_read: length=<".length($buf).">\n");
   return defined($rc) ? $buf : -ENOSYS();
 }
 #----------- flush() ---------------------------------------
 #--- Useless on read-only branches, however called from fuse
 #- before every close file, opened even for read().
 sub u_flush {
-  #&Say("---39---u_flush(@_)\n");
+  #&Say("---41---u_flush(@_)\n");
   return 0;
 }
 #----------- readlink() ------------------------------------
 #--- Return the symlink string value
 sub u_readlink {
-  #&Say("---41---u_readlink(@_)\n");
+  #&Say("---42---u_readlink(@_)\n");
   my $file = shift();
   my $path = upath($file) or return -ENOENT();
   return readlink($path);
@@ -243,7 +242,7 @@ sub u_readlink {
 #--NOTE: do not include this in Fuse::main() args, --
 # to supress 2+ extra calls on each file.
 sub u_listxattr {
-  #&Say("---41---u_listxattr(@_)\n");
+  #&Say("---43---u_listxattr(@_)\n");
   my $file = shift();
   my $path = upath($file) or return ();
   #return listxattr($path);      #-- no native support in perl
@@ -255,7 +254,7 @@ sub u_listxattr {
 #--NOTE: avoid to include this in Fuse::main() args, --
 # to supress 2+ extra calls on each file.
 sub u_getxattr {
-  &Say("---35---u_getxattr(@_)\n");
+  &Say("---44---u_getxattr(@_)\n");
   #    my ($file,$name) = @_;
   #    my $path = upath($file) or return ();
   #      #return lgetxattr($path,$name,$value,$size);
@@ -278,7 +277,7 @@ sub u_statfs {
 #----------- rofs() ----------------------------------------
 #--- Return "read-only filesystem" error
 sub rofs {
-  #&Say("---43---rofs(@_)\n");
+  &Say("---45---rofs(@_)\n");
   return -EROFS();
 }
 sub u_chmod         { &rofs('chmod'         ,@_); }

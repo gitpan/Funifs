@@ -2,7 +2,7 @@
 #
 # /etc/init.d/funifs
 #
-# Copyright (C) Vladimir V. Kolpakov 2006-2009
+# Copyright (C) Vladimir V. Kolpakov 2006-2011
 # All rights reserved.
 #
 ### BEGIN INIT INFO
@@ -20,60 +20,81 @@
 . /etc/rc.status
 
 collect_funifs () {
-  fstab=${1:-/etc/fstab}
+  auto=$1
   funifs=()
-  while read  where what type options rest  ; do
-    [[ $where == funifs#* && $type = fuse && $options != *noauto* ]] || continue
+  while read  what where type options rest ; do
+    [[ $what != \#* && $type = fuse.funifs ]] || continue
+    [[ -n $auto && $options = *noauto* ]] && continue
     funifs+=( $where )
-  done < $fstab
+  done < /etc/fstab
+  mounted=()
+  unmounted=()
+  for n in ${funifs[@]} ; do
+    if fgrep -q " $n " /proc/mounts ; then
+      mounted+=( $n )
+    else
+      unmounted+=( $n )
+    fi
+  done
   test -n "$funifs"
 }
 
 rc_reset
 case "$1" in
-    start|reload)
-	echo -n "Mounting Funifs userland file systems"
-	collect_funifs || rc_failed 3
-	for n in ${funifs[@]} ; do
-	  mount $n || { rc_failed ; break ; }
-	done
-	rc_status -v
-	;;
-    stop)
-	echo -n "Unmounting Funifs userland file systems"
-	collect_funifs /proc/mounts || rc_failed 3
-	for n in ${funifs[@]} ; do
-	  umount $n || rc_failed
-	done
-	rc_status -v
-	;;
-    restart|force-reload)
-        ## Stop the service and regardless of whether it was
-	## running or not, start it again.
-	$0 stop
-	$0 start
-	rc_status
-	;;
-    status)
-	echo -n "Checking for mounted Funifs nodes:"
-	collect_funifs || collect_funifs /proc/mounts || rc_failed 3
-	for n in ${funifs[@]} ; do
-	  grep -q "$n " /proc/mounts || { echo -n " $n"; rc_failed ; continue ; }
-	done
-        rc_status -v
-	;;
-    try-restart|condrestart)
-	$0 status
-	if test $? = 0; then
-	    $0 restart
-	else
-	    rc_reset
-	fi
-	rc_status
-	;;
-    *)
-	echo "Usage: $0 {start|stop|status|reload|force-reload|restart|try-restart|condrestart}"
-	exit 1
+  start|reload)
+    echo -n "Mounting Funifs userland file systems"
+    collect_funifs auto || rc_failed 3
+    for n in ${unmounted[@]} ; do
+      node=
+      while read  what where type options rest ; do
+	[[ $what != \#* && $type = fuse.funifs && $where = $n ]] || continue
+	[[ -n $node ]] && { echo -n ' ***' Duplicate of $n in /etc/fstab ; rc_failed ; break 2 ; }
+	/sbin/mount.fuse $what $n -o $options -t /usr/sbin/funifs || { rc_failed ; break 2 ; }
+	node=$n
+      done < /etc/fstab
+    done
+    rc_status -v
+    ;;
+  stop)
+    echo -n "Unmounting Funifs userland file systems"
+    collect_funifs || rc_failed 3
+    for n in ${mounted[@]} ; do
+      umount $n || rc_failed
+    done
+    rc_status -v
+    ;;
+  restart|force-reload)
+    ## Stop the service and regardless of whether it was
+    ## running or not, start it again.
+    $0 stop
+    $0 start
+    rc_status
+    ;;
+  status)
+    collect_funifs || rc_failed 3
+    if test -n "$mounted" ; then
+      echo -n "Mounted Funifs nodes: "${mounted[@]}
+      rc_status -v
+    fi
+    collect_funifs auto
+    if test -n "$unmounted" ; then
+      echo -n "Unmounted Funifs nodes: "${unmounted[@]}
+      rc_failed
+      rc_status -v
+    fi
+    ;;
+  try-restart|condrestart)
+    $0 status
+    if test $? = 0; then
+      $0 restart
+    else
+      rc_reset
+    fi
+    rc_status
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|status|reload|force-reload|restart|try-restart|condrestart}"
+    exit 1
 esac
 rc_exit
 
